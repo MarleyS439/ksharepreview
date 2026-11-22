@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import MagicMock, patch
 
-from ksharepreview.metadata import normalize_url, parse_html_metadata
+from ksharepreview.metadata import fetch_link_metadata, normalize_url, parse_html_metadata
 
 
 SAMPLE_HTML = """<!doctype html>
@@ -32,8 +33,19 @@ class TestMetadataParser(unittest.TestCase):
     def test_normalize_url(self) -> None:
         self.assertEqual(normalize_url("kde.org"), "https://kde.org")
         self.assertEqual(normalize_url("http://example.com/a"), "http://example.com/a")
+        self.assertEqual(normalize_url('  "<https://example.com/my page>"  '), "https://example.com/my%20page")
         with self.assertRaises(ValueError):
             normalize_url("   ")
+
+    def test_fetch_fallback_on_400(self) -> None:
+        resp_400 = MagicMock(status_code=400, text="Bad Request", url="https://example.com", encoding="utf-8")
+        resp_200 = MagicMock(status_code=200, text=SAMPLE_HTML, url="https://kde.org/", encoding="utf-8")
+        with patch("ksharepreview.metadata.requests.Session") as mock_session_cls:
+            mock_sess = mock_session_cls.return_value
+            mock_sess.get.side_effect = [resp_400, resp_200]
+            meta = fetch_link_metadata("https://kde.org/")
+            self.assertEqual(meta.title, "KDE — Liberdade Digital")
+            self.assertEqual(mock_sess.get.call_count, 2)
 
     def test_parse_opengraph_twitter_and_relative_images(self) -> None:
         meta = parse_html_metadata(SAMPLE_HTML, final_url="https://kde.org/pt/")

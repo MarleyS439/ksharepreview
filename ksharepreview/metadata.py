@@ -15,6 +15,26 @@ DEFAULT_USER_AGENT = (
     "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 )
 
+HEADER_PROFILES: list[dict[str, str]] = [
+    {
+        "User-Agent": DEFAULT_USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Upgrade-Insecure-Requests": "1",
+    },
+    {
+        "User-Agent": "WhatsApp/2.24.6.77",
+        "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+    },
+    {
+        "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+        "Accept": "*/*",
+    },
+    {
+        "User-Agent": "Mozilla/5.0",
+    },
+]
+
 
 @dataclass
 class LinkMetadata:
@@ -92,7 +112,7 @@ class _HeadMetaParser(HTMLParser):
 
 
 def normalize_url(raw_url: str) -> str:
-    url = (raw_url or "").strip()
+    url = (raw_url or "").strip().strip("<>\"'\r\n\t\u200b")
     if not url:
         raise ValueError("Informe uma URL válida.")
     if not url.startswith(("http://", "https://")):
@@ -100,7 +120,10 @@ def normalize_url(raw_url: str) -> str:
     parsed = urllib.parse.urlsplit(url)
     if not parsed.netloc:
         raise ValueError("URL inválida. Exemplo: https://github.com")
-    return url
+    # Garante codificação segura de espaços/caracteres não-ASCII no caminho e query
+    clean_path = urllib.parse.quote(urllib.parse.unquote(parsed.path), safe="/:@-._~!$&'()*+,;=")
+    clean_query = urllib.parse.quote(urllib.parse.unquote(parsed.query), safe="=&/:@-._~!$'()*+,;?")
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, clean_path, clean_query, parsed.fragment))
 
 
 def _abs_url(base_url: str, candidate: str) -> str:
@@ -218,20 +241,32 @@ def parse_html_metadata(html_text: str, final_url: str, input_url: str = "", sta
 
 
 def fetch_link_metadata(raw_url: str, timeout: int = 12) -> LinkMetadata:
-    """Busca a URL e extrai metadados OpenGraph/Twitter/HTML."""
+    """Busca a URL e extrai metadados OpenGraph/Twitter/HTML com fallback de cabeçalhos."""
     url = normalize_url(raw_url)
-    headers = {
-        "User-Agent": DEFAULT_USER_AGENT,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
-    }
-    resp = requests.get(url, headers=headers, timeout=timeout, allow_redirects=True)
-    resp.raise_for_status()
-    if resp.encoding is None or resp.encoding.lower() == "iso-8859-1":
-        resp.encoding = resp.apparent_encoding or "utf-8"
+    last_resp: requests.Response | None = None
+
+    for headers in HEADER_PROFILES:
+        session = requests.Session()
+        session.headers.clear()
+        resp = session.get(url, headers=headers, timeout=timeout, allow_redirects=True)
+        last_resp = resp
+        if resp.status_code < 400:
+            break
+        if resp.status_code not in (400, 403, 406, 429):
+            break
+
+    assert last_resp is not None
+    if last_resp.status_code >= 400:
+        # Alguns sites retornam 4xx mas ainda incluem OpenGraph válido no HTML
+        body_lower = (last_resp.text or "")[:8192].lower()
+        if "og:title" not in body_lower and "twitter:title" not in body_lower:
+            last_resp.raise_for_status()
+
+    if last_resp.encoding is None or last_resp.encoding.lower() == "iso-8859-1":
+        last_resp.encoding = last_resp.apparent_encoding or "utf-8"
     return parse_html_metadata(
-        resp.text,
-        final_url=resp.url,
+        last_resp.text,
+        final_url=last_resp.url,
         input_url=url,
-        status_code=resp.status_code,
+        status_code=last_resp.status_code,
     )
