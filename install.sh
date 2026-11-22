@@ -19,8 +19,7 @@ mkdir -p "${HOME}/.local/bin" \
 if command -v pipx >/dev/null 2>&1; then
   pipx install --system-site-packages --force "${SCRIPT_DIR}"
 elif python3 -m pip --version >/dev/null 2>&1; then
-  python3 -m pip install --user --break-system-packages --upgrade "${SCRIPT_DIR}" \
-    || python3 -m pip install --user --upgrade "${SCRIPT_DIR}"
+  python3 -m pip install --user --break-system-packages --upgrade "${SCRIPT_DIR}"
 else
   DEST_APP="${HOME}/.local/share/ksharepreview"
   rm -rf "${DEST_APP}"
