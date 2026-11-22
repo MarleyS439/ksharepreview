@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=KSharePreview
+GenericName=Link & Metadata Previewer
+GenericName[pt_BR]=Visualizador de Links e Metadados
+Comment=Preview OpenGraph, Twitter Cards and banner images for any URL
+Comment[pt_BR]=Visualize metadados OpenGraph, Twitter Cards e banners de qualquer URL
+Exec=ksharepreview %u
+Icon=io.github.marleys439.ksharepreview
+Terminal=false
+Categories=Network;Utility;Qt;KDE;
+Keywords=share;preview;opengraph;twitter;metadata;link;banner;kde;
+StartupNotify=true
+X-KDE-Wayland-Interfaces=org_kde_plasma_window_management

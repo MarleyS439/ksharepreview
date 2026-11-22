@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.marleys439.ksharepreview</id>
+  <name>KSharePreview</name>
+  <summary>Preview OpenGraph metadata and banner images for links on KDE Plasma</summary>
+  <summary xml:lang="pt-BR">Visualize metadados OpenGraph e banners de links no KDE Plasma</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.marleys439">
+    <name>MarleyS439</name>
+  </developer>
+  <description>
+    <p>
+      KSharePreview is a lightweight, native KDE Plasma (Qt6 / Kirigami) application to inspect
+      social sharing metadata (OpenGraph, Twitter/X Cards, HTML meta tags) and banner images from any URL.
+    </p>
+  </description>
+  <url type="homepage">https://github.com/MarleyS439/ksharepreview</url>
+  <url type="bugtracker">https://github.com/MarleyS439/ksharepreview/issues</url>
+  <launchable type="desktop-id">io.github.marleys439.ksharepreview.desktop</launchable>
+  <provides>
+    <binary>ksharepreview</binary>
+  </provides>
+  <releases>
+    <release version="0.1.0" date="2026-11-22">
+      <description>
+        <p>Initial release with OpenGraph/Twitter Card previews, banner viewer/downloader, and metadata inspector.</p>
+      </description>
+    </release>
+  </releases>
+</component>

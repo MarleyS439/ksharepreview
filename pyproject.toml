@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ksharepreview"
+version = "0.1.0"
+description = "Visualizador leve de metadados OpenGraph, Twitter Cards e banners para KDE Plasma"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "MarleyS439" }]
+requires-python = ">=3.11"
+dependencies = ["PySide6>=6.6", "requests>=2.31"]
+keywords = ["kde", "plasma", "kirigami", "opengraph", "twitter-cards", "metadata", "share-preview"]
+
+[project.urls]
+Homepage = "https://github.com/MarleyS439/ksharepreview"
+Repository = "https://github.com/MarleyS439/ksharepreview"
+Issues = "https://github.com/MarleyS439/ksharepreview/issues"
+
+[project.scripts]
+ksharepreview = "ksharepreview.main:main"
